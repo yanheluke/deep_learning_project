@@ -6,7 +6,7 @@
 # ## Get the Data
 # Run the following cell to download the [CIFAR-10 dataset for python](https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz).
 
-# In[2]:
+# In[1]:
 
 
 """
@@ -68,7 +68,7 @@ tests.test_folder_path(cifar10_dataset_folder_path)
 # 
 # Ask yourself "What are all possible labels?", "What is the range of values for the image data?", "Are the labels in order or random?".  Answers to questions like these will help you preprocess the data and end up with better predictions.
 
-# In[3]:
+# In[2]:
 
 
 get_ipython().magic('matplotlib inline')
@@ -87,7 +87,7 @@ helper.display_stats(cifar10_dataset_folder_path, batch_id, sample_id)
 # ### Normalize
 # In the cell below, implement the `normalize` function to take in image data, `x`, and return it as a normalized Numpy array. The values should be in the range of 0 to 1, inclusive.  The return object should be the same shape as `x`.
 
-# In[18]:
+# In[3]:
 
 
 batch1 = helper.load_cfar10_batch(cifar10_dataset_folder_path, 1)
@@ -97,13 +97,13 @@ from sklearn.preprocessing import OneHotEncoder
 enc = OneHotEncoder()
 
 
-# In[21]:
+# In[4]:
 
 
 enc.fit(np.array(batch1[1]).reshape(-1,1))
 
 
-# In[4]:
+# In[5]:
 
 
 def normalize(x):
@@ -130,10 +130,12 @@ tests.test_normalize(normalize)
 # 
 # Hint: Don't reinvent the wheel.
 
-# In[11]:
+# In[7]:
 
 
 from sklearn import preprocessing
+lb = preprocessing.LabelBinarizer()
+
 def one_hot_encode(x):
     """
     One hot encode a list of sample labels. Return a one-hot encoded vector for each label.
@@ -141,8 +143,7 @@ def one_hot_encode(x):
     : return: Numpy array of one-hot encoded labels
     """
     # TODO: Implement Function
-    labels = np.array(range(np.max(x)))
-    lb = preprocessing.LabelBinarizer()
+    labels = np.array(range(10))
     lb.fit(labels)
     one_hot_encoder_labels = lb.transform(x)
     return one_hot_encoder_labels
@@ -160,7 +161,7 @@ tests.test_one_hot_encode(one_hot_encode)
 # ## Preprocess all the data and save it
 # Running the code cell below will preprocess all the CIFAR-10 data and save it to file. The code below also uses 10% of the training data for validation.
 
-# In[12]:
+# In[8]:
 
 
 """
@@ -173,7 +174,7 @@ helper.preprocess_and_save_data(cifar10_dataset_folder_path, normalize, one_hot_
 # # Check Point
 # This is your first checkpoint.  If you ever decide to come back to this notebook or have to restart the notebook, you can start from here.  The preprocessed data has been saved to disk.
 
-# In[13]:
+# In[9]:
 
 
 """
@@ -214,7 +215,7 @@ valid_features, valid_labels = pickle.load(open('preprocess_validation.p', mode=
 # 
 # Note: `None` for shapes in TensorFlow allow for a dynamic size.
 
-# In[16]:
+# In[10]:
 
 
 import tensorflow as tf
@@ -275,7 +276,7 @@ tests.test_nn_keep_prob_inputs(neural_net_keep_prob_input)
 # 
 # **Note:** You **can't** use [TensorFlow Layers](https://www.tensorflow.org/api_docs/python/tf/layers) or [TensorFlow Layers (contrib)](https://www.tensorflow.org/api_guides/python/contrib.layers) for **this** layer, but you can still use TensorFlow's [Neural Network](https://www.tensorflow.org/api_docs/python/tf/nn) package. You may still use the shortcut option for all the **other** layers.
 
-# In[22]:
+# In[11]:
 
 
 def conv2d_maxpool(x_tensor, conv_num_outputs, conv_ksize, conv_strides, pool_ksize, pool_strides):
@@ -295,7 +296,11 @@ def conv2d_maxpool(x_tensor, conv_num_outputs, conv_ksize, conv_strides, pool_ks
     filter_size_height = conv_ksize[1]
     ## Get color_channel of x_tensor using 'tensor.shape.as_list'
     color_channel = x_tensor.shape.as_list()[3]
-    W_conv1 = tf.Variable(tf.truncated_normal([filter_size_width, filter_size_height, color_channel, conv_num_outputs]))
+    W_conv1 = tf.Variable(tf.truncated_normal([filter_size_width, 
+                                               filter_size_height, 
+                                               color_channel, 
+                                               conv_num_outputs], 
+                                             stddev = 0.05))
     b_conv1 = tf.Variable(tf.zeros(conv_num_outputs))
     ## Apply Convolution
     conv_layer = tf.nn.conv2d(x_tensor, W_conv1, strides = [1, conv_strides[0], conv_strides[1], 1], padding = 'SAME')
@@ -319,7 +324,7 @@ tests.test_con_pool(conv2d_maxpool)
 # ### Flatten Layer
 # Implement the `flatten` function to change the dimension of `x_tensor` from a 4-D tensor to a 2-D tensor.  The output should be the shape (*Batch Size*, *Flattened Image Size*). Shortcut option: you can use classes from the [TensorFlow Layers](https://www.tensorflow.org/api_docs/python/tf/layers) or [TensorFlow Layers (contrib)](https://www.tensorflow.org/api_guides/python/contrib.layers) packages for this layer. For more of a challenge, only use other TensorFlow packages.
 
-# In[24]:
+# In[12]:
 
 
 def flatten(x_tensor):
@@ -344,7 +349,7 @@ tests.test_flatten(flatten)
 # ### Fully-Connected Layer
 # Implement the `fully_conn` function to apply a fully connected layer to `x_tensor` with the shape (*Batch Size*, *num_outputs*). Shortcut option: you can use classes from the [TensorFlow Layers](https://www.tensorflow.org/api_docs/python/tf/layers) or [TensorFlow Layers (contrib)](https://www.tensorflow.org/api_guides/python/contrib.layers) packages for this layer. For more of a challenge, only use other TensorFlow packages.
 
-# In[25]:
+# In[13]:
 
 
 def fully_conn(x_tensor, num_outputs):
@@ -355,7 +360,7 @@ def fully_conn(x_tensor, num_outputs):
     : return: A 2-D tensor where the second dimension is num_outputs.
     """
     # TODO: Implement Function
-    fully_conn_layer = tf.layers.dense(x_tensor, num_outputs)
+    fully_conn_layer = tf.layers.dense(x_tensor, num_outputs, activation = tf.nn.relu)
     return fully_conn_layer
 
 
@@ -370,7 +375,7 @@ tests.test_fully_conn(fully_conn)
 # 
 # **Note:** Activation, softmax, or cross entropy should **not** be applied to this.
 
-# In[26]:
+# In[14]:
 
 
 def output(x_tensor, num_outputs):
@@ -401,7 +406,7 @@ tests.test_output(output)
 # * Return the output
 # * Apply [TensorFlow's Dropout](https://www.tensorflow.org/api_docs/python/tf/nn/dropout) to one or more layers in the model using `keep_prob`. 
 
-# In[30]:
+# In[15]:
 
 
 def conv_net(x, keep_prob):
@@ -416,6 +421,7 @@ def conv_net(x, keep_prob):
     # Function Definition from Above:
     #    conv2d_maxpool(x_tensor, conv_num_outputs, conv_ksize, conv_strides, pool_ksize, pool_strides)
     conv1 = conv2d_maxpool(x, 64, (5, 5), (1, 1),(3, 3), (2, 2))
+    conv2 = conv2d_maxpool(conv1, 64, (5, 5), (1, 1),(3, 3),(2, 2))
 
     # TODO: Apply a Flatten Layer
     # Function Definition from Above:
@@ -428,10 +434,10 @@ def conv_net(x, keep_prob):
     # Function Definition from Above:
     #   fully_conn(x_tensor, num_outputs)
     fully_conn_1 = fully_conn(flatten_layer, 384)
-    #fully_conn_2 = fully_conn(fully_conn_1, 192)
+    fully_conn_2 = fully_conn(fully_conn_1, 192)
     
     # Dropout
-    fully_conn_drop = tf.nn.dropout(fully_conn_1, keep_prob)
+    fully_conn_drop = tf.nn.dropout(fully_conn_2, keep_prob)
     
     # TODO: Apply an Output Layer
     #    Set this to the number of classes
@@ -487,7 +493,7 @@ tests.test_conv_net(conv_net)
 # 
 # Note: Nothing needs to be returned. This function is only optimizing the neural network.
 
-# In[37]:
+# In[16]:
 
 
 def train_neural_network(session, optimizer, keep_probability, feature_batch, label_batch):
@@ -517,7 +523,7 @@ tests.test_train_nn(train_neural_network)
 # ### Show Stats
 # Implement the function `print_stats` to print loss and validation accuracy.  Use the global variables `valid_features` and `valid_labels` to calculate validation accuracy.  Use a keep probability of `1.0` to calculate the loss and validation accuracy.
 
-# In[38]:
+# In[17]:
 
 
 def print_stats(session, feature_batch, label_batch, cost, accuracy):
@@ -553,7 +559,7 @@ def print_stats(session, feature_batch, label_batch, cost, accuracy):
 #  * ...
 # * Set `keep_probability` to the probability of keeping a node using dropout
 
-# In[39]:
+# In[18]:
 
 
 # TODO: Tune Parameters
@@ -565,7 +571,7 @@ keep_probability = 0.3
 # ### Train on a Single CIFAR-10 Batch
 # Instead of training the neural network on all the CIFAR-10 batches of data, let's use a single batch. This should save time while you iterate on the model to get a better accuracy.  Once the final validation accuracy is 50% or greater, run the model on all the data in the next section.
 
-# In[40]:
+# In[19]:
 
 
 """
@@ -588,7 +594,7 @@ with tf.Session() as sess:
 # ### Fully Train the Model
 # Now that you got a good accuracy with a single CIFAR-10 batch, try it with all five batches.
 
-# In[41]:
+# In[21]:
 
 
 """
@@ -621,7 +627,7 @@ with tf.Session() as sess:
 # ## Test Model
 # Test your model against the test dataset.  This will be your final accuracy. You should have an accuracy greater than 50%. If you don't, keep tweaking the model architecture and parameters.
 
-# In[42]:
+# In[22]:
 
 
 """
